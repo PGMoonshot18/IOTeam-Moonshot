@@ -1,0 +1,73 @@
+{% extends 'main.html' %}
+{% load static %}
+{% block style %}
+	{% include "templates/css-basic.html" %}
+{% endblock %}
+{% block content %}
+	{% include "templates/div-head.html" %}
+		<img id="cam_view" src="" />
+		
+
+		<script>
+			var streamReloader = setInterval(function(){reloader();},500);
+			var previousVal = -1;
+			var fullprice = 0.0;
+
+			function reloader(){
+				$.ajax({url: 'http://10.237.228.79:80/getLiveFeed/', 
+					success: function(result){
+						var result = JSON.parse(result);
+						document.getElementById("cam_view").src = result['cam_view'];
+						document.getElementById("eval_view").src = result['eval_view'];
+						var currentVal = parseInt(result['output_count']);
+						if(currentVal != previousVal){
+
+							var item = result['latestEvalImageClass']
+							var score = parseInt(result['latestEvalImageScore'])
+							if(score > 30){
+								// document.getElementById("actual_output").innerHTML += item + '<br />';
+								if(item == "banana"){
+									document.getElementById("live_output").innerHTML += "Banana = 20.0 Php" + '<br />';
+									fullprice += 20.0;
+								}else if(item == "orange"){
+									document.getElementById("live_output").innerHTML += "Orange = 15.0 Php" + '<br />';
+									fullprice += 15.0;
+								}else if(item == "maraca"){
+									document.getElementById("live_output").innerHTML += "Maracas = 100.0 Php" + '<br />';
+									fullprice += 100.0;
+								}else{
+									document.getElementById("live_output").innerHTML += item + " = 50.0 Php" + '<br />';
+								}
+
+
+								document.getElementById("totalcost").innerHTML = fullprice;
+							}
+							previousVal = currentVal;
+						}
+					},
+					error: function(){
+						clearInterval(streamReloader);
+				}
+				});
+			}
+
+			function toggleCapture(params){
+				$.ajax({url: 'http://10.237.228.79:80/toggleCapture/', 
+					success: function(result){
+						var result = JSON.parse(result);
+						document.getElementById("running_output").innerHTML = result['output'];
+					}
+				});
+				// Returns "Error: Msg" if an error has occurred, might be due to parsing of parameters or could be a site/camera unavailability
+				// Returns "Unauthorized" on output if user is not authorized for this function
+				// Returns "Turned On" if the live feed is turned on
+				// Returns "Already On" if the live feed is already turned off
+				// Returns "Turned Off" if the live feed is turned off
+				// Returns "Already Off" if the live feed is already turned off
+			}
+		</script>
+	{% include "templates/div-foot.html" %}
+{% endblock %}
+{% block scripts %}
+	{% include "templates/js-basic.html" %}
+{% endblock %}
